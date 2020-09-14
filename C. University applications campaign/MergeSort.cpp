@@ -2,89 +2,64 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
+#include <functional>
 
 using std::vector;
 using std::unordered_map;
+using std::string;
 using std::cin;
 using std::cout;
 using std::swap;
 using std::endl;
 
-template< class InputIt1, class InputIt2, class OutputIt >
-OutputIt merge( InputIt1 first1, InputIt1 last1,
+//The following is an implementation of stable mergesort algorithm
+
+template<class InputIt1, class InputIt2, class OutputIt, class Cmp> // The different types of input iterators are added for representation purposes
+void Merge(InputIt1 first1, InputIt1 last1,
                 InputIt2 first2, InputIt2 last2,
-                OutputIt d_first ) {
-    auto it_first = first1;
-    auto it_second = first2;
-
-    while (it_first != last1 && it_second != last2) {
-        while (it_first != last1 && *it_first <= *it_second) {
-            vec.emplace_back(*it_first);
-            d_first = 
-            ++it_first;
+                OutputIt d_first, Cmp cmp) {
+    while (first1 != last1 && first2 != last2) {
+        if (cmp(*first1, *first2)) {
+            *d_first = *first1;
+            ++first1;
+        } else {
+            *d_first = *first2;
+            ++first2;
         }
-        if (it_first == first.end()) {
-            while (it_second != second.end()) {
-                vec.emplace_back(*it_second);
-                ++it_second;
-            }
-            break;
-        }
-
-        while (it_second != second.end() && *it_second <= *it_first) {
-            vec.emplace_back(*it_second);
-            ++it_second;
-        }
-
-        if (it_second == second.end()) {
-            while (it_first != first.end()) {
-                vec.emplace_back(*it_first);
-                ++it_first;
-            }
-            break;
-        }
+        ++d_first;
+    }
+    while (first2 != last2) {
+        *d_first = *first2;
+        ++first2;
+        ++d_first;
+    }
+    while (first1 != last1) {
+        *d_first = *first1;
+        ++first1;
+        ++d_first;
     }
 }
 
-auto ComponentMergeSort(const unordered_map<std::string, int>& first, const unordered_map<std::string, int>&) {
-    vector<int> vec;
-    vec.reserve(first.size() + second.size());
-
-    auto it_first = first.begin();
-    auto it_second = second.begin();
-
-    while (it_first != first.end() && it_second != second.end()) {
-        while (it_first != first.end() && *it_first <= *it_second) {
-            vec.emplace_back(*it_first);
-            ++it_first;
-        }
-        if (it_first == first.end()) {
-            while (it_second != second.end()) {
-                vec.emplace_back(*it_second);
-                ++it_second;
-            }
-            break;
-        }
-
-        while (it_second != second.end() && *it_second <= *it_first) {
-            vec.emplace_back(*it_second);
-            ++it_second;
-        }
-
-        if (it_second == second.end()) {
-            while (it_first != first.end()) {
-                vec.emplace_back(*it_first);
-                ++it_first;
-            }
-            break;
-        }
+template<class RandomIt, class Cmp>
+void MergeSort(RandomIt first, RandomIt last, Cmp cmp) {
+    if (last == std::next(first)) {
+        return;
     }
-    return vec;
+    RandomIt mid = std::next(first, std::distance(first, last) / 2);
+    MergeSort(first, mid, cmp);
+    MergeSort(mid, last, cmp);
+
+    std::vector<typename RandomIt::value_type> temp_buf(std::distance(first, last));
+    temp_buf.reserve(std::distance(first, last));
+    //std::copy(first, last, temp_buf.begin());
+    Merge(first, mid, mid, last, temp_buf.begin(), cmp);
+    std::copy(temp_buf.begin(), temp_buf.end(), first);
 }
 
-void Print(const vector<int>& arr) {
-    for(int i : arr)
-        std::cout << i << ' ';
+template <class Cont>
+void Print(const Cont& arr) {
+    for(const auto& i : arr)
+        std::cout << i.first << std::endl;
 }
 
 
@@ -94,7 +69,7 @@ int main()
     int n = 0;
     std::string name;
     std::string surname;
-    std::unordered_map<std::string, int> person_score;
+    std::vector<std::pair<std::string, int>> person_score;
     std::cin >> n;
 
     person_score.reserve(n);
@@ -104,12 +79,10 @@ int main()
         cin >> surname;
         int inf, math, rus = 0;
         cin >> inf >> math >> rus;
-        person_score[name + ' ' + surname] = inf + math + rus;
+        person_score.emplace_back(name + ' ' + surname, inf + math + rus);
     }
 
-    auto res = LinearMerge(first, second);
-    Print(res);
+    MergeSort(person_score.begin(), person_score.end(), [](const std::pair<std::string, int>& x, const std::pair<std::string, int>& y){return x.second >= y.second;});
+    Print(person_score);
     return 0;
 }
-
-
